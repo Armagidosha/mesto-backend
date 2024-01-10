@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import NotFoundError from '../errors/notFound';
 import CardModel from '../models/card';
+import ForbiddenError from '../errors/forbidden';
 
 class CardCtrl {
-  async getCards(req: Request, res: Response, next: NextFunction) {
+  async getCards(_req: Request, res: Response, next: NextFunction) {
     try {
       const cards = await CardModel.find({});
       return res.json(cards);
@@ -14,7 +15,6 @@ class CardCtrl {
 
   async createCard(req: Request, res: Response, next: NextFunction) {
     try {
-      console.log(req);
       const { name, link } = req.body;
       const card = await CardModel.create({ name, link, owner: req.user._id });
       return res.status(201).json(card);
@@ -25,10 +25,14 @@ class CardCtrl {
 
   async deleteCard(req: Request, res: Response, next: NextFunction) {
     try {
-      const card = await CardModel.findByIdAndDelete(req.params.cardId);
+      const card = await CardModel.findById(req.params.cardId);
       if (!card) {
         throw new NotFoundError('Карточка по указзаному _id не найдена.');
       }
+      if (card.owner.toString() !== req.user._id) {
+        throw new ForbiddenError('Нельзя удалять чужие карточки.');
+      }
+      await card.deleteOne();
       return res.json(card);
     } catch (error) {
       next(error);

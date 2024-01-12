@@ -1,16 +1,17 @@
-import 'dotenv/config';
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import Conflict from '../errors/conflict';
 import NotFoundError from '../errors/notFound';
-import UserModel from '../models/user';
+import userModel from '../models/user';
+import envConfig from '../config';
 
-const { JWT_KEY } = process.env;
+// TODO: refactor add decorators
 
 class UserCtrl {
   async getUsers(_req: Request, res: Response, next: NextFunction) {
     try {
-      const users = await UserModel.find({});
+      const users = await userModel.find({});
       return res.json(users);
     } catch (error) {
       next(error);
@@ -19,7 +20,7 @@ class UserCtrl {
 
   async getCurrentUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await UserModel.findById(req.params.id);
+      const user = await userModel.findById(req.params.id);
       if (!user) {
         throw new NotFoundError('Пользователь по указзаному _id не найден.');
       }
@@ -31,7 +32,7 @@ class UserCtrl {
 
   async getUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await UserModel.findById(req.user._id);
+      const user = await userModel.findById(req.user._id);
       if (!user) {
         throw new NotFoundError('Пользователь по указзаному _id не найден.');
       }
@@ -51,7 +52,7 @@ class UserCtrl {
         email,
       } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await UserModel.create({
+      const user = await userModel.create({
         email, password: hashedPassword, name, about, avatar,
       });
       return res.status(201).json({
@@ -62,6 +63,9 @@ class UserCtrl {
         _id: user._id,
       });
     } catch (error) {
+      if ((error as any).code === 11000) {
+        next(new Conflict('Пользователь уже существует.'));
+      }
       next(error);
     }
   }
@@ -69,7 +73,11 @@ class UserCtrl {
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const { name, about } = req.body;
-      const user = await UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true });
+      const user = await userModel.findByIdAndUpdate(
+        req.user._id,
+        { name, about },
+        { new: true, runValidators: true },
+      );
       if (!user) {
         throw new NotFoundError('Пользователь по указзаному _id не найден.');
       }
@@ -82,7 +90,11 @@ class UserCtrl {
   async updateAvatar(req: Request, res: Response, next: NextFunction) {
     try {
       const { avatar } = req.body;
-      const user = await UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true });
+      const user = await userModel.findByIdAndUpdate(
+        req.user._id,
+        { avatar },
+        { new: true, runValidators: true },
+      );
       if (!user) {
         throw new NotFoundError('Пользователь по указзаному _id не найден.');
       }
@@ -95,7 +107,7 @@ class UserCtrl {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const user = await UserModel.findOne({ email }).select('+password');
+      const user = await userModel.findOne({ email }).select('+password');
       if (!user) {
         throw new NotFoundError('Неправильные почта или пароль');
       }
@@ -104,7 +116,7 @@ class UserCtrl {
       if (!matched) {
         throw new NotFoundError('Неправильные почта или пароль');
       }
-      const token = jwt.sign({ _id: user._id }, JWT_KEY as string, { expiresIn: '7d' });
+      const token = jwt.sign({ _id: user._id }, envConfig.JWT_KEY as string, { expiresIn: '7d' });
       return res.cookie('jwt', token, {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,

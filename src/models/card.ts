@@ -39,4 +39,4 @@ const cardSchema = new Schema<Card>({
   },
 }, { versionKey: false });
 
-export default model<Card>('Card', cardSchema);
+export default model<Card>('card', cardSchema);

@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import NotFoundError from '../errors/notFound';
-import CardModel from '../models/card';
+import cardModel from '../models/card';
 import ForbiddenError from '../errors/forbidden';
 
+// TODO: refactor add decorators
 class CardCtrl {
   async getCards(_req: Request, res: Response, next: NextFunction) {
     try {
-      const cards = await CardModel.find({});
+      const cards = await cardModel.find({});
       return res.json(cards);
     } catch (error) {
       next(error);
@@ -16,7 +17,7 @@ class CardCtrl {
   async createCard(req: Request, res: Response, next: NextFunction) {
     try {
       const { name, link } = req.body;
-      const card = await CardModel.create({ name, link, owner: req.user._id });
+      const card = await cardModel.create({ name, link, owner: req.user._id });
       return res.status(201).json(card);
     } catch (error) {
       next(error);
@@ -25,7 +26,7 @@ class CardCtrl {
 
   async deleteCard(req: Request, res: Response, next: NextFunction) {
     try {
-      const card = await CardModel.findById(req.params.cardId);
+      const card = await cardModel.findById(req.params.cardId);
       if (!card) {
         throw new NotFoundError('Карточка по указзаному _id не найдена.');
       }
@@ -41,7 +42,7 @@ class CardCtrl {
 
   async likeCard(req: Request, res: Response, next: NextFunction) {
     try {
-      const card = await CardModel.findByIdAndUpdate(
+      const card = await cardModel.findByIdAndUpdate(
         req.params.cardId,
         { $addToSet: { likes: req.user._id } },
         { new: true },
@@ -57,7 +58,7 @@ class CardCtrl {
 
   async dislikeCard(req: Request, res: Response, next: NextFunction) {
     try {
-      const card = await CardModel.findByIdAndUpdate(
+      const card = await cardModel.findByIdAndUpdate(
         req.params.cardId,
         { $pull: { likes: req.user._id } },
         { new: true },

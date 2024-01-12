@@ -1,28 +1,13 @@
 import { Router } from 'express';
-import { celebrate, Joi } from 'celebrate';
 import UserCtrl from '../controllers/user';
+import rules from './validation/user-rules';
 
 const router = Router();
 
-router.get('/users', UserCtrl.getUsers);
-router.get('/users/me', UserCtrl.getUser);
-router.get('/users/:id', celebrate({
-  params: Joi.object({
-    id: Joi.string().required().alphanum().length(24),
-  }),
-}), UserCtrl.getCurrentUser);
-
-router.patch('/users/me', celebrate({
-  body: Joi.object({
-    name: Joi.string().min(2).max(30).required(),
-    about: Joi.string().min(2).max(200).required(),
-  }),
-}), UserCtrl.updateProfile);
-
-router.patch('/users/me/avatar', celebrate({
-  body: Joi.object({
-    avatar: Joi.string().required().uri({ scheme: ['http', 'https'] }),
-  }),
-}), UserCtrl.updateAvatar);
+router.get('/', UserCtrl.getUsers);
+router.get('/me', UserCtrl.getUser);
+router.get('/:id', rules.getCurrentUser, UserCtrl.getCurrentUser);
+router.patch('/me', rules.updateProfile, UserCtrl.updateProfile);
+router.patch('/me/avatar', rules.updateAvatar, UserCtrl.updateAvatar);
 
 export default router;

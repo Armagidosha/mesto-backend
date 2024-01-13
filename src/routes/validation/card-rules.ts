@@ -11,19 +11,19 @@ class ValidationRules {
 
   delCard = celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().hex().length(24),
+      cardId: Joi.string().hex().length(24).required(),
     }),
   });
 
   likeCard = celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().hex().length(24),
+      cardId: Joi.string().hex().length(24).required(),
     }),
   });
 
   dislikeCard = celebrate({
     params: Joi.object().keys({
-      cardId: Joi.string().hex().length(24),
+      cardId: Joi.string().hex().length(24).required(),
     }),
   });
 }

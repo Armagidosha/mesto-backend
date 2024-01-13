@@ -4,7 +4,7 @@ import urlRegex from '../../utils/constants';
 class ValidationRules {
   getCurrentUser = celebrate({
     params: Joi.object({
-      id: Joi.string().required().hex().length(24),
+      id: Joi.string().hex().length(24).required(),
     }),
   });
 

@@ -5,6 +5,7 @@ import Conflict from '../errors/conflict';
 import NotFoundError from '../errors/notFound';
 import userModel from '../models/user';
 import envConfig from '../config';
+import BadRequest from '../errors/badRequest';
 
 // TODO: refactor add decorators
 
@@ -65,8 +66,9 @@ class UserCtrl {
     } catch (error) {
       if ((error as any).code === 11000) {
         next(new Conflict('Пользователь уже существует.'));
+      } else {
+        next(error);
       }
-      next(error);
     }
   }
 
@@ -109,12 +111,12 @@ class UserCtrl {
       const { email, password } = req.body;
       const user = await userModel.findOne({ email }).select('+password');
       if (!user) {
-        throw new NotFoundError('Неправильные почта или пароль');
+        throw new BadRequest('Неправильные почта или пароль');
       }
       const matched = await bcrypt.compare(password, user.password);
 
       if (!matched) {
-        throw new NotFoundError('Неправильные почта или пароль');
+        throw new BadRequest('Неправильные почта или пароль');
       }
       const token = jwt.sign({ _id: user._id }, envConfig.JWT_KEY as string, { expiresIn: '7d' });
       return res.cookie('jwt', token, {

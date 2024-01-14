@@ -5,7 +5,7 @@ import Conflict from '../errors/conflict';
 import NotFoundError from '../errors/notFound';
 import userModel from '../models/user';
 import envConfig from '../config';
-import BadRequest from '../errors/badRequest';
+import UnauthorizedError from '../errors/unauthorized';
 
 // TODO: refactor add decorators
 
@@ -111,12 +111,12 @@ class UserCtrl {
       const { email, password } = req.body;
       const user = await userModel.findOne({ email }).select('+password');
       if (!user) {
-        throw new BadRequest('Неправильные почта или пароль');
+        throw new UnauthorizedError('Неправильные почта или пароль');
       }
       const matched = await bcrypt.compare(password, user.password);
 
       if (!matched) {
-        throw new BadRequest('Неправильные почта или пароль');
+        throw new UnauthorizedError('Неправильные почта или пароль');
       }
       const token = jwt.sign({ _id: user._id }, envConfig.JWT_KEY as string, { expiresIn: '7d' });
       return res.cookie('jwt', token, {

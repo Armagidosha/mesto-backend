@@ -28,7 +28,7 @@ class CardCtrl {
     try {
       const card = await cardModel.findById(req.params.cardId);
       if (!card) {
-        throw new NotFoundError('Карточка по указзаному _id не найдена.');
+        throw new NotFoundError('Карточка по указанному _id не найдена.');
       }
       if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('Нельзя удалять чужие карточки.');
